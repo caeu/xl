@@ -36,7 +36,7 @@ jobs:
     needs: ['create-release']
     strategy:
       matrix:
-        build: [linux, macos, win-msvc, win32-msvc]
+        build: [linux, macos]
         include:
         - build: linux
           os: ubuntu-18.04
@@ -45,15 +45,7 @@ jobs:
         - build: macos
           os: macos-latest
           rust: nightly
-          target: x86_64-apple-darwin
-        - build: win-msvc
-          os: windows-2019
-          rust: nightly
-          target: x86_64-pc-windows-msvc
-        - build: win32-msvc
-          os: windows-2019
-          rust: nightly
-          target: i686-pc-windows-msvc
+          target: aarch64-apple-darwin
 
     steps:
       - name: Checkout repository
