@@ -26,6 +26,7 @@ a really big file, you may want to limit how many rows you print to screen. The
 following will print the first 10 lines of the "Book1.xlsx" file included in
 this repository:
 
+
 ```bash
 $ xlcat tests/data/Book1.xlsx Sheet1 -n 10
 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18
