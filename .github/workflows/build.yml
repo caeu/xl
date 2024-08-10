@@ -1,0 +1,80 @@
+name: Build and Release Binaries
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on tag pushes like v1.0.0
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            binary_name: xlcat  # Replace with your binary's name
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            binary_name: xlcat  # Replace with your binary's name
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set Up Rust
+        uses: actions/setup-rust@v2
+        with:
+          profile: minimal
+          override: true
+
+      - name: Install Target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Install Dependencies (Linux Only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install musl-tools -y
+
+      - name: Build Binary
+        run: |
+          cargo build --release --target ${{ matrix.target }}
+
+      - name: Prepare Artifact
+        run: |
+          mkdir artifacts
+          cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} artifacts/
+          cd artifacts
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+            zip ${ matrix.binary_name }-${{ matrix.target }}.zip ${ matrix.binary_name }
+          else
+            zip ${ matrix.binary_name }-${{ matrix.target }}.zip ${ matrix.binary_name }
+          fi
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.binary_name }}-${{ matrix.target }}
+          path: artifacts/${{ matrix.binary_name }}-${{ matrix.target }}.zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          name: ${{ matrix.binary_name }}-${{ matrix.target }}.zip
+          files: artifacts/${{ matrix.binary_name }}-${{ matrix.target }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
